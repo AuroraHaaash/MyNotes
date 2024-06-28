@@ -374,3 +374,33 @@
     僵尸进程不是没有死，而是没有完整地完成进程死亡过程，“彻底销毁"。因此杀死僵尸进程的说法并不正确。清理僵尸进程的方法是kill其父进程，父进程死亡，僵尸进程会被托孤给init进程，init进程会立马对其进行“彻底销毁"。
 
     进程的exit_group执行完成后，该进程即成为僵尸进程。僵尸进程没有用户空间，也不能再执行。僵尸进程的文件等所有资源都已经被释放，但仍剩余一个task_struct结构体。如果父进程此时正wait子进程或者之前就已经在wait子进程，wait会返回，task_struct会被销毁，这个进程就"彻底销毁"。
+
+13. 关于wait函数传出的status参数相关宏
+
+    > #define WIFEXITED(status)   (((status) & 0x7f) == 0)
+    >
+    > \#define WEXITSTATUS(status) (((status) & 0xff00) >> 8)
+
+    若`WIFEXITED(status)`值非0，则进程正常结束
+
+    若`WIFEXITED(status)`为真，此时可通过`WEXITSTATUS(status)`获取进程退出状态(exit时参数)
+
+    > #define WIFSIGNALED(status) ((status) - 1 < 0xff)
+    >
+    > \#define WTERMSIG(status)    ((status) & 0x7f)
+
+    若`WIFSIGNALED(status)`值非0，则表明进程异常终止
+
+    若`WIFSIGNALED(status)`为真，此时可通过`WTERMSIG(status)`获得使得进程退出的信号编号
+
+    > WIFSTOPPED(status) & WSTOPSIG(status)
+
+    若前者非0，则表明进程处于暂停状态
+
+    若该宏为真，此时可通过`WSTOPSIG(status)`获取使得进程暂停的信号编号
+
+    > WIFCONTINUED(status)
+
+    若值非0，则表明进程暂停后已经继续运行
+
+14. 
